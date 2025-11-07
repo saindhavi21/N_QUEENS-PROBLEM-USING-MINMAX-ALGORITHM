@@ -1,0 +1,97 @@
+import tkinter as tk
+from tkinter import messagebox
+
+# ---------- Minimax Logic for N Queens ---------- #
+
+def is_safe(board, row, col, n):
+    # Check column
+    for i in range(row):
+        if board[i] == col or abs(board[i] - col) == abs(i - row):
+            return False
+    return True
+
+def evaluate(board, n):
+    # Lower score = fewer conflicts
+    score = 0
+    for i in range(n):
+        for j in range(i + 1, n):
+            if board[i] == board[j] or abs(board[i] - board[j]) == abs(i - j):
+                score += 1
+    return -score  # higher (closer to 0) is better
+
+def minimax(board, depth, n, maximizingPlayer):
+    if depth == n:
+        return evaluate(board, n), board
+
+    if maximizingPlayer:
+        best_val = float('-inf')
+        best_board = None
+        for col in range(n):
+            if is_safe(board, depth, col, n):
+                board[depth] = col
+                val, _ = minimax(board[:], depth + 1, n, False)
+                if val > best_val:
+                    best_val = val
+                    best_board = board[:]
+        return best_val, best_board
+    else:
+        best_val = float('inf')
+        best_board = None
+        for col in range(n):
+            board[depth] = col
+            val = evaluate(board, n)
+            if val < best_val:
+                best_val = val
+                best_board = board[:]
+        return best_val, best_board
+
+
+def solve_n_queens(n):
+    board = [-1] * n
+    _, best_board = minimax(board, 0, n, True)
+    if best_board:
+        return best_board
+    else:
+        return None
+
+# ---------- GUI (Tkinter Window) ---------- #
+
+def display_board(solution):
+    n = len(solution)
+    window = tk.Tk()
+    window.title(f"{n}-Queens Solution (Minimax)")
+    cell_size = 60
+    canvas = tk.Canvas(window, width=n * cell_size, height=n * cell_size)
+    canvas.pack()
+
+    for i in range(n):
+        for j in range(n):
+            color = "white" if (i + j) % 2 == 0 else "gray"
+            x1 = j * cell_size
+            y1 = i * cell_size
+            x2 = x1 + cell_size
+            y2 = y1 + cell_size
+            canvas.create_rectangle(x1, y1, x2, y2, fill=color)
+
+            if solution[i] == j:
+                canvas.create_text(x1 + cell_size/2, y1 + cell_size/2,
+                                   text="♛", font=("Arial", 32), fill="red")
+
+    window.mainloop()
+
+# ---------- Main ---------- #
+
+if _name_ == "_main_":
+    try:
+        n = int(input("Enter number of queens (N >= 4): "))
+        if n < 4:
+            print("N must be at least 4.")
+        else:
+            solution = solve_n_queens(n)
+            if solution:
+                print("Solution:", solution)
+                display_board(solution)
+            else:
+                print("No solution found.")
+    except ValueError:
+        print("Please enter a valid integer.")
